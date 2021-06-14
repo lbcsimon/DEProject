@@ -1,6 +1,5 @@
 # MOBIKE API
 
-18124722 ZhongLeXing  18124666 ZhuYiBing
 
 # 1.INSTALLATION
 
