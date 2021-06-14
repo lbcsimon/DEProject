@@ -1,0 +1,69 @@
+version: "3.6"
+services:
+  spark-base:
+    build: ./spark-base
+    container_name: spark-base
+  flask:
+    build: ./flask 
+    container_name: flaskapi
+    ports:
+      - 5000:5000
+    volumes:
+      - ../mobike_volume:/app
+    depends_on:
+      - spark-base
+      - mysql
+  jupyterlab:
+    build: ./jupyter
+    container_name: jupyter-de
+    ports:
+      - 8899:8888
+    volumes:
+      - ../mobike_volume:/app
+    depends_on:
+      - spark-base
+      - mysql
+  mysql:
+    image: mysql:5.7  
+    container_name: mysql
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - LANG=C.UTF-8
+    volumes:
+      - ../mobike_volume:/app
+  spark-master:
+    build: ./spark-master
+    container_name: spark-master
+    ports:
+      - 8080:8080
+      - 7077:7077
+    volumes:
+      - ../mobike_volume:/app
+    depends_on:
+      - spark-base
+  spark-worker-1:
+    build: ./spark-worker
+    container_name: spark-worker-1
+    environment:
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=512m
+    ports:
+      - 8082:8081
+    volumes:
+      - ../mobike_volume:/app
+    depends_on:
+      - spark-master
+  spark-worker-2:
+    build: ./spark-worker
+    container_name: spark-worker-2
+    environment:
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=512m
+    ports:
+      - 8081:8081
+    volumes:
+      - ../mobike_volume:/app
+    depends_on:
+      - spark-master
