@@ -11,10 +11,8 @@ RUN pip3 install requests
 RUN pip3 install pymysql
 RUN cd spark/python && python3 setup.py install
 RUN cd && rm -rf spark
-
 EXPOSE 8888
 VOLUME /app/
-RUN python3 mobike.py
 CMD jupyter lab --ip 0.0.0.0 --allow-root
 
 

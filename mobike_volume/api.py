@@ -8,15 +8,17 @@ import datetime
 import json
 app = Flask(__name__)
 
-con = pymysql.connect(host='mysql', port = 3306, user = 'root', password = 'root', db = 'mobike', charset = 'utf8')
+con = pymysql.connect(host='mysql', port = 3306, user = 'root', password = 'root', charset = 'utf8')
 cursor = con.cursor()
 
 def getBikePopularity(weekday, hour, location):
+    sql = "USE mobike"
+    cursor.execute(sql)
     sql = f"""
     SELECT 
         bike_popularity
     FROM
-        start
+        end
     WHERE weekday = {weekday} and 
           hour = {hour} and 
           location_name like '%{location}%'
@@ -26,10 +28,12 @@ def getBikePopularity(weekday, hour, location):
         row = cursor.fetchone()
         return json.dumps({'bike_popularity':row[0], 'location': location, 'hour': hour, 'weekday': weekday})
     except:
-        return {"response": 404}
+        return {"response": "no bike activities here"}
 
 
 def fromove(weekday, hour, from_):
+    sql = "USE mobike"
+    cursor.execute(sql)
     sql = f"""
     SELECT distinct location_longitude, location_latitude, bike_popularity
     from end e
@@ -51,14 +55,16 @@ def fromove(weekday, hour, from_):
               s.location_longitude <= {long} + 0.1 and 
               s.location_latitude <= {lat} + 0.1 and
               {lat} - 0.1 <=s.location_longitude and
-              s.bike_popularity > 10
+              s.bike_popularity > 5
         LIMIT 10    
     """
     cursor.execute(sql)
     rows = cursor.fetchall()
-    return json.dumps({'from_':from_, 'weekday': weekday, 'hour': hour, 'have': bike, 'strategy' : [{'to_':row[0], 'gone':row[1]} for row in rows]}, indent=10)
+    return jsonify({'from_':from_, 'weekday': weekday, 'hour': hour, 'have': bike, 'strategy' : [{'to_':row[0], 'gone':row[1]} for row in rows]})
 
 def tomove(weekday, hour,to_):
+    sql = "USE mobike"
+    cursor.execute(sql)
     sql = f"""
     SELECT distinct location_longitude, location_latitude, bike_popularity
     from start s
@@ -80,14 +86,14 @@ def tomove(weekday, hour,to_):
               e.location_longitude <= {long} + 0.1 and 
               e.location_latitude <= {lat} + 0.1 and
               {lat} - 0.1 <= e.location_longitude and
-              e.bike_popularity > 10
+              e.bike_popularity > 5
         LIMIT 10    
     """
 
     cursor.execute(sql)
     rows = cursor.fetchall()
 
-    return json.dumps({'to_':to_, 'weekday': weekday, 'hour': hour, 'gone': bike, 'strategy' : [{'from_':row[0], 'have':row[1]} for row in rows]}, indent=10)
+    return jsonify({'to_':to_, 'weekday': weekday, 'hour': hour, 'gone': bike, 'strategy' : [{'from_':row[0], 'have':row[1]} for row in rows]})
 
 def moveStrategy(weekday, hour, from_, to_):
     if to_ == "":
